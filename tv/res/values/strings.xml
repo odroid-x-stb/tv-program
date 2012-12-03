@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TV</string>
+    
+    <string name="select_channel">Select your channel below</string>
+    <string name="tv_program_url_now">http://www.programme-tv.net/programme/programme-tnt/en-ce-moment.html#Grandes&#160;chaînes</string>
+    <string name="tv_program_url">http://www.programme-tv.net/programme/programme-tnt.html</string>
+	<string name="data_retrieved_successful">Data retrieved successful</string>
+	<string name="arg_error">Bad given arguments to async task</string>
+	<string name="load_error">Impossible to load web data flow</string>
+	<string name="parse_error">Impossible to retrieve data from flow</string>
+	
+	
+	<!-- Image description -->
+	<string name="reload_description">Reload channel programs</string>
+    
+</resources>
