@@ -7,6 +7,7 @@ import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.Window;
 import android.widget.ImageView;
 import android.widget.ListView;
 
@@ -33,6 +34,7 @@ public class ChannelSelectionActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
         setContentView(R.layout.channel_selection);
         
         // Set ListView and his adapter
@@ -40,7 +42,7 @@ public class ChannelSelectionActivity extends Activity {
         channelAdapter = new ChannelAdapter(getApplicationContext(), R.layout.channel_row, new ArrayList<ChannelProgram>());
         allChannels.setAdapter(channelAdapter);
         
-        reloadButton = (ImageView) findViewById(R.id.reload_button);
+        reloadButton = (ImageView) findViewById(R.id.reload);
         reloadButton.setOnClickListener(new OnClickListener() {
 			
 			@Override
@@ -50,6 +52,7 @@ public class ChannelSelectionActivity extends Activity {
 				}
 			}
 		});
+		
         
         fillChannelNamesHashMap();
         

@@ -31,6 +31,17 @@ public class ChannelProgram {
 		
 	}
 	
+	public ChannelProgram(int channelNumber) {
+			this.title = "";
+			this.description = "";
+			for(Channel ch : channels) {
+				if(ch.getNumber() == channelNumber) {
+					this.channel = ch;
+					break;
+				}
+			}
+	}
+	
 	public int getChannelNumber() {
 		return this.channel.getNumber();
 	}

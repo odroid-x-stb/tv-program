@@ -109,12 +109,18 @@ public class ChannelProgramAsync extends AsyncTask<String, Integer, ArrayList<Ch
 	
 	private void orderChannels() {
 		ArrayList<ChannelProgram> orderedChannels = new ArrayList<ChannelProgram>();
+		boolean found = false;
 		for(int wantedChannelNumber=1;wantedChannelNumber<ChannelProgram.channels.size();wantedChannelNumber++) {
 			for(ChannelProgram channelProgram : this.channels) {
 				if(channelProgram.getChannelNumber() == wantedChannelNumber) {
 					orderedChannels.add(channelProgram);
+					found = true;
 				}
 			}
+			if(!found) {
+				orderedChannels.add(new ChannelProgram(wantedChannelNumber));
+			}
+			found = false;
 		}
 		channels = orderedChannels;
 	}
