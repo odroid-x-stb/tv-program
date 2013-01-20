@@ -14,13 +14,6 @@
   <description>STB TV list program application</description>
   <url></url>
 
-  <distributionManagement> 
-    <site> 
-      <id>id</id> 
-      <url>http://my.url</url> 
-    </site> 
-  </distributionManagement>
-
   <developers>
     <developer>
       <name>Sebastien Dubouchez</name>
@@ -72,12 +65,7 @@
 
     <headerdir>${project.basedir}</headerdir>
 
-    <proguard.skip>false</proguard.skip>
-    <checkstyle.skip>false</checkstyle.skip>
-    <findbugs.skip>false</findbugs.skip>
-    <cobertura.skip>false</cobertura.skip>
-    <javadocs.skip>false</javadocs.skip>
-    <pmd.skip>false</pmd.skip>    
+    <proguard.skip>true</proguard.skip>
   </properties>
 
   <dependencyManagement>
