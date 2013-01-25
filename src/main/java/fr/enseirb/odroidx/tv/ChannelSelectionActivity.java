@@ -1,64 +1,80 @@
-/**
- * Copyright (C) 2012 Sebastien Dubouchez <sdubouchez@enseirb-matmeca.fr>
- *
- * Licensed under the GNU LESSER GENERAL PUBLIC LICENSE, Version 3, 29 June 2007;
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.gnu.org/licenses/lgpl-3.0.txt
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package fr.enseirb.odroidx.tv;
 
 import java.util.ArrayList;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+
+
+
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 public class ChannelSelectionActivity extends Activity {
 
-    /**
-     * UI attributes
-     */
-    private ListView allChannels;
-    private ChannelAdapter channelAdapter;
-    private ProgressDialog progressDialog;
-    private ImageView reloadButton;
-    
-    /**
-     * Async task to get data
-     */
-    private ChannelProgramAsync asyncDataGetter;
-    private boolean isGettingPrograms;
-    
-    {
-    	isGettingPrograms = false;
-    }
-    
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        
-        setContentView(R.layout.channel_selection);
-        
-        // Set ListView and his adapter
-        allChannels = (ListView) findViewById(R.id.all_channels);
-        channelAdapter = new ChannelAdapter(getApplicationContext(), R.layout.channel_row, new ArrayList<ChannelProgram>());
-        allChannels.setAdapter(channelAdapter);
-        
-        reloadButton = (ImageView) findViewById(R.id.reload);
-        reloadButton.setOnClickListener(new OnClickListener() {
-			
+	/**
+	 * UI attributes
+	 */
+	private ListView allChannels;
+	private ChannelAdapter channelAdapter;
+	private ProgressDialog progressDialog;
+	private ImageView reloadButton;
+
+	/**
+	 * Async task to get Data
+	 */
+	private ChannelProgramAsync asyncDataGetter;
+	private boolean isGettingPrograms;
+	private fr.enseirb.odroidx.tv.STBRemoteControlCommunication stbrcc;
+	
+	/**
+	 * Async task to ask Server
+	 */
+	private AskChannelToServerAsync askChannelToServerAsync;
+	private boolean isAskingChannel;
+
+	/**
+	 * Serveur IP
+	 */
+	private String serverIp;
+	private String tntServerTvPort = "10000";
+
+	{
+		isGettingPrograms = false;
+		serverIp = null;
+	}
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+
+		setContentView(R.layout.channel_selection);
+
+		Intent receivedIntent = getIntent();
+		if(receivedIntent != null) {
+			serverIp = receivedIntent.getStringExtra("serverIP");
+		}
+
+		// Set ListView and his adapter
+		allChannels = (ListView) findViewById(R.id.all_channels);
+		channelAdapter = new ChannelAdapter(getApplicationContext(), R.layout.channel_row, new ArrayList<ChannelProgram>());
+		allChannels.setAdapter(channelAdapter);
+
+		reloadButton = (ImageView) findViewById(R.id.reload);
+		reloadButton.setOnClickListener(new OnClickListener() {
+
 			@Override
 			public void onClick(View v) {
 				if(!isGettingPrograms) {
@@ -66,40 +82,88 @@ public class ChannelSelectionActivity extends Activity {
 				}
 			}
 		});
-		
-        
-        fillChannelNamesHashMap();
-        
-        getPrograms();
-        
-    }
+
+		allChannels.setOnItemClickListener(new OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> parent, View v, int position, long arg3) {
+				if(serverIp == null) {
+					Toast.makeText(getApplicationContext(), "No server IP given", Toast.LENGTH_LONG).show();
+				}
+				else {
+					int channelNumber = position + 1;
+					
+					if(!isAskingChannel) {
+						Log.i("ChannelSelectionActivity", "Asking channel" + channelNumber);
+						getChannel(channelNumber);
+					}
+					
+				}
+			}
+		});
+
+
+		fillChannelNamesHashMap();
+
+		getPrograms();
+
+	}
 
 	public void getPrograms() {
-		
+
 		isGettingPrograms = true;
-		
-    	// Show progress dialog
-        progressDialog = ProgressDialog.show(this, "Loading", "Data is loading");
-        
-        // Launch async task to get programs
-        asyncDataGetter = new ChannelProgramAsync(this);
-        asyncDataGetter.execute(getString(R.string.tv_program_url_now));        
-    }
-    
-    public ProgressDialog getProgressDialog() {
-    	return progressDialog;
-    }
-    
-    public void setChannelPrograms(ArrayList<ChannelProgram> newChannelPrograms) {
-    	channelAdapter.clear();
-    	for (ChannelProgram channelProgram : newChannelPrograms) {
-    		channelAdapter.add(channelProgram);
-    	}
-    	channelAdapter.notifyDataSetChanged();
-    	isGettingPrograms = false;
-    }
-    
-    private void fillChannelNamesHashMap() {
+
+		// Show progress dialog
+		progressDialog = ProgressDialog.show(this, "Loading", "Data is loading");
+
+		// Launch async task to get programs
+		asyncDataGetter = new ChannelProgramAsync(this);
+		asyncDataGetter.execute(getString(R.string.tv_program_url_now));        
+	}
+	
+	public void getChannel(int requestedChannel) {
+
+		isAskingChannel = true;
+
+		// Show progress dialog
+		progressDialog = ProgressDialog.show(this, "Loading", "Channel is loading");
+
+		// Launch async task to get programs
+		askChannelToServerAsync = new AskChannelToServerAsync(this, serverIp, tntServerTvPort);
+		askChannelToServerAsync.execute(String.valueOf(requestedChannel));        
+	}
+	
+	public void setisAskingChannel(boolean value) {
+		this.isAskingChannel = value;
+	}
+
+	public ProgressDialog getProgressDialog() {
+		return progressDialog;
+	}
+
+	public void setChannelPrograms(ArrayList<ChannelProgram> newChannelPrograms) {
+		channelAdapter.clear();
+		for (ChannelProgram channelProgram : newChannelPrograms) {
+			channelAdapter.add(channelProgram);
+		}
+		channelAdapter.notifyDataSetChanged();
+		isGettingPrograms = false;
+	}
+
+	@Override
+	protected void onStart() {
+		stbrcc = new STBRemoteControlCommunication(this);
+		stbrcc.doBindService();
+		super.onStart();
+	}
+
+	@Override
+	protected void onStop() {
+		stbrcc.doUnbindService();
+		super.onStop();
+	}
+
+	private void fillChannelNamesHashMap() {
 		if(ChannelProgram.channels == null) {
 			ChannelProgram.channels = new ArrayList<Channel>();
 		}
@@ -125,7 +189,7 @@ public class ChannelSelectionActivity extends Activity {
 			ChannelProgram.channels.add(new Channel("France Ô", 19, R.drawable.franceo));
 		}
 	}
-    
+
 
 }
 
